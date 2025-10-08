@@ -6,7 +6,7 @@ def get_car_counts(video_path=0):
     For now, we assume a fixed 4-way junction (North, East, South, West).
     TODO: Add lane/ROI mapping for real cameras.
     """
-    model = YOLO("yolov11n.pt")  # Load model (nano for speed)
+    model = YOLO("yolo11n.pt")  # Load model (nano for speed)
 
     results = model(video_path, stream=True)
 

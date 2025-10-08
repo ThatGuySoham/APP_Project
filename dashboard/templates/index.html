@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Smart Traffic Dashboard</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #1e1e2f;
+    color: #fff;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 { color: #00ffcc; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 30px;
+  }
+  .card {
+    background: #292946;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,255,204,0.2);
+  }
+  .light {
+    font-size: 20px;
+    color: #ffcc00;
+  }
+  canvas {
+    margin-top: 25px;
+  }
+</style>
+</head>
+<body>
+  <h1>🚦 Smart Traffic Management Dashboard</h1>
+  <div id="timestamp"></div>
+  <div class="grid">
+    <div class="card"><h2>North</h2><div id="north">--</div></div>
+    <div class="card"><h2>East</h2><div id="east">--</div></div>
+    <div class="card"><h2>South</h2><div id="south">--</div></div>
+    <div class="card"><h2>West</h2><div id="west">--</div></div>
+  </div>
+  <canvas id="trafficCanvas" width="400" height="400"></canvas>
+
+<script>
+async function fetchData() {
+  try {
+    const res = await fetch('/status');
+    const data = await res.json();
+    document.getElementById('north').innerText = data.north;
+    document.getElementById('east').innerText = data.east;
+    document.getElementById('south').innerText = data.south;
+    document.getElementById('west').innerText = data.west;
+    document.getElementById('timestamp').innerText = "Last updated: " + data.timestamp;
+
+    drawIntersection(data);
+  } catch (e) {
+    console.log("Waiting for data...");
+  }
+}
+
+function drawIntersection(data) {
+  const canvas = document.getElementById('trafficCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 400, 400);
+
+  // Roads
+  ctx.fillStyle = "#333";
+  ctx.fillRect(150, 0, 100, 400);
+  ctx.fillRect(0, 150, 400, 100);
+
+  // Cars
+  ctx.fillStyle = "#00ffcc";
+  const positions = {
+    north: [180, 100],
+    east: [250, 180],
+    south: [180, 250],
+    west: [100, 180]
+  };
+  for (const dir in positions) {
+    const [x, y] = positions[dir];
+    const count = data[dir] || 0;
+    for (let i = 0; i < Math.min(count, 5); i++) {
+      ctx.fillRect(x + i * 10, y + i * 5, 8, 8);
+    }
+  }
+}
+
+setInterval(fetchData, 2000);
+</script>
+</body>
+</html>
+
