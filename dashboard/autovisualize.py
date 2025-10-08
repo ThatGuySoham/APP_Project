@@ -4,26 +4,41 @@ import time
 import os
 
 # --- Configuration ---
-API_URL = "http://localhost:5000/traffic_counts"  # Replace if different
+API_URL = "http://localhost:5000/status"  # Replace if different
 SAVE_FOLDER = "dashboard/visuals"
 INTERVAL = 60  # in seconds, adjust as needed
 
 # Ensure save folder exists
 os.makedirs(SAVE_FOLDER, exist_ok=True)
-
 def fetch_traffic_counts():
     try:
         response = requests.get(API_URL)
         data = response.json()
-        return data  # expects {'North': 120, 'South': 80, 'East': 100, 'West': 60}
+        
+        if 'North_Count' in data:
+             return {
+                 'North': int(data.get('North_Count', 0)),  # <-- ADD int()
+                 'South': int(data.get('South_Count', 0)), # <-- ADD int()
+                 'East': int(data.get('East_Count', 0)),   # <-- ADD int()
+                 'West': int(data.get('West_Count', 0)),   # <-- ADD int()
+             }
+        else:
+             return {'North': 0, 'South': 0, 'East': 0, 'West': 0}
+        
     except:
         # fallback if API fails
         return {'North': 0, 'South': 0, 'East': 0, 'West': 0}
+
 
 def create_charts(data):
     directions = list(data.keys())
     vehicle_counts = list(data.values())
     total = sum(vehicle_counts)
+
+    if total == 0:
+        print("Skipping chart creation: Total traffic count is zero (API might be down or data not ready).")
+        # Ensure the script exits cleanly without attempting to draw charts
+        return 
 
     # Bar chart
     plt.figure(figsize=(8,5))
