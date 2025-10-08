@@ -40,4 +40,9 @@ North: 🔴 Red
 East: 🚗 3 cars → Green 10s
 ...
 =======
+```
+<img width="1902" height="579" alt="image" src="https://github.com/user-attachments/assets/4bd9ed94-e766-423f-a46e-60b2b50db23e" />
+
+<img width="1900" height="844" alt="image" src="https://github.com/user-attachments/assets/b05d89e4-9848-43a2-87c0-ca9131d38ba9" />
+
 
