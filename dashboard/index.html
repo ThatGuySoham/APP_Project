@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>AATOS - Smart Traffic Dashboard</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e2f;
+            color: #e0e0e0;
+            text-align: center;
+            margin: 0;
+            padding: 30px;
+        }
+        h1 { 
+            color: #00ffcc; 
+            font-size: 2.2em;
+            margin-bottom: 5px;
+        }
+        #timestamp {
+            color: #aaa;
+            margin-bottom: 25px;
+            font-size: 0.9em;
+        }
+        
+        /* Grid Layout for Status Cards */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto 40px;
+        }
+        .card {
+            background: #292946;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,255,204,0.1);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .card h2 {
+            margin-top: 0;
+            color: #00ffcc;
+            font-size: 1.6em;
+        }
+        .status {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #ffcc00; /* Default color */
+            margin-top: 10px;
+        }
+
+        /* Visualization Area */
+        .visualization-area {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+        }
+        .visualization-area img {
+            max-width: 45%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(255,255,255,0.05);
+            transition: opacity 0.5s;
+        }
+        
+        /* Intersection Canvas */
+        #trafficCanvas {
+            background: #292946;
+            border-radius: 10px;
+            margin-top: 30px;
+            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>🚦 Smart Traffic Management Dashboard</h1>
+    <div id="timestamp">Loading...</div>
+
+    <div class="grid-container">
+        <div class="card"><h2>North</h2><div id="north-status" class="status">--</div></div>
+        <div class="card"><h2>East</h2><div id="east-status" class="status">--</div></div>
+        <div class="card"><h2>South</h2><div class="status" id="south-status">--</div></div>
+        <div class="card"><h2>West</h2><div class="status" id="west-status">--</div></div>
+    </div>
+    
+    <div class="visualization-area">
+        <img id="bar-chart-img" src="/visuals/traffic_bar_chart.png" alt="Traffic Count Bar Chart">
+        <img id="pie-chart-img" src="/visuals/traffic_pie_chart.png" alt="Traffic Distribution Pie Chart">
+    </div>
+
+    <canvas id="trafficCanvas" width="400" height="400"></canvas>
+
+<script>
+    // --- Data Fetching and Update Logic ---
+    async function fetchData() {
+        try {
+            const res = await fetch('/status');
+            const data = await res.json();
+            
+            // 1. Update Status Cards (FIXED: Uses Python's capitalized keys)
+            document.getElementById('north-status').innerText = data.North || 'No Data';
+            document.getElementById('east-status').innerText = data.East || 'No Data';
+            document.getElementById('south-status').innerText = data.South || 'No Data';
+            document.getElementById('west-status').innerText = data.West || 'No Data';
+            
+            // 2. Update Timestamp (FIXED: Uses Python's capitalized key)
+            document.getElementById('timestamp').innerText = "Last updated: " + (data.Last_Update || 'Initializing...');
+
+            // 3. Force Chart Image Reload (Cache Busting)
+            const timestamp = new Date().getTime();
+            document.getElementById('bar-chart-img').src = '/visuals/traffic_bar_chart.png?' + timestamp;
+            document.getElementById('pie-chart-img').src = '/visuals/traffic_pie_chart.png?' + timestamp;
+
+            // 4. Update Intersection Visualization
+            drawIntersection({
+                north: data.North_Count, 
+                east: data.East_Count, 
+                south: data.South_Count, 
+                west: data.West_Count
+            });
+            
+        } catch (e) {
+            // console.log("Waiting for data..."); 
+        }
+    }
+
+    // --- Visualization Logic (Unchanged) ---
+    function drawIntersection(counts) {
+        const canvas = document.getElementById('trafficCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, 400, 400);
+
+        // Roads
+        ctx.fillStyle = "#333";
+        ctx.fillRect(150, 0, 100, 400);
+        ctx.fillRect(0, 150, 400, 100);
+
+        // Cars
+        ctx.fillStyle = "#00ffcc";
+        const positions = {
+            north: [180, 100],
+            east: [250, 180],
+            south: [180, 250],
+            west: [100, 180]
+        };
+        
+        // Loop through the counts object (e.g., counts.north = 12)
+        for (const dir in counts) {
+            const [x, y] = positions[dir];
+            // Ensure count is a number, defaulting to 0
+            const count = parseInt(counts[dir]) || 0; 
+            
+            // Draw up to 5 simple blocks to represent traffic
+            for (let i = 0; i < Math.min(count, 5); i++) {
+                ctx.fillRect(x + i * 10, y + i * 5, 8, 8);
+            }
+        }
+    }
+
+    // --- Run Update Loop ---
+    // Fetch data every 2 seconds
+    setInterval(fetchData, 2000); 
+    // Initial fetch to load dashboard immediately
+    fetchData(); 
+</script>
+</body>
+</html>
